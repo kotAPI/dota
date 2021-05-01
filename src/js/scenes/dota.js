@@ -52,8 +52,6 @@ var skeletons = [];
 var tileWidthHalf;
 var tileHeightHalf;
 
-var d = 0;
-
 var scene;
 
 // GameObject Skeleton
@@ -76,16 +74,13 @@ class Skeleton extends Phaser.GameObjects.Image {
         scene.time.delayedCall(this.anim.speed * 1000, this.changeFrame, [], this);
     }
 
-    changeFrame ()
-    {
+    changeFrame() {
         this.f++;
 
         var delay = this.anim.speed;
 
-        if (this.f === this.anim.endFrame)
-        {
-            switch (this.motion)
-            {
+        if (this.f === this.anim.endFrame) {
+            switch (this.motion) {
                 case 'walk':
                     this.f = this.anim.startFrame;
                     this.frame = this.texture.get(this.direction.offset + this.f);
@@ -108,16 +103,14 @@ class Skeleton extends Phaser.GameObjects.Image {
                     break;
             }
         }
-        else
-        {
+        else {
             this.frame = this.texture.get(this.direction.offset + this.f);
 
             scene.time.delayedCall(delay * 1000, this.changeFrame, [], this);
         }
     }
 
-    resetAnimation ()
-    {
+    resetAnimation() {
         this.f = this.anim.startFrame;
 
         this.frame = this.texture.get(this.direction.offset + this.f);
@@ -125,21 +118,17 @@ class Skeleton extends Phaser.GameObjects.Image {
         scene.time.delayedCall(this.anim.speed * 1000, this.changeFrame, [], this);
     }
 
-    update ()
-    {
-        if (this.motion === 'walk')
-        {
+    update() {
+        if (this.motion === 'walk') {
             this.x += this.direction.x * this.speed;
 
-            if (this.direction.y !== 0)
-            {
+            if (this.direction.y !== 0) {
                 this.y += this.direction.y * this.speed;
                 this.depth = this.y + 64;
             }
 
             //  Walked far enough?
-            if (Phaser.Math.Distance.Between(this.startX, this.startY, this.x, this.y) >= this.distance)
-            {
+            if (Phaser.Math.Distance.Between(this.startX, this.startY, this.x, this.y) >= this.distance) {
                 this.direction = directions[this.direction.opposite];
                 this.f = this.anim.startFrame;
                 this.frame = this.texture.get(this.direction.offset + this.f);
@@ -150,19 +139,14 @@ class Skeleton extends Phaser.GameObjects.Image {
     }
 }
 
-var upArrow,downArrow,leftArrow,rightArrow
+var upArrow, downArrow, leftArrow, rightArrow
 
-var zoom =1;
-var zoomStep = 0.1;
-class Dota extends Phaser.Scene
-{
-    constructor ()
-    {
+class Dota extends Phaser.Scene {
+    constructor() {
         super('Dota');
     }
 
-    preload ()
-    {
+    preload() {
         this.load.json('map', grasswater);
         this.load.spritesheet('tiles', grasswaterpng, { frameWidth: 64, frameHeight: 64 });
         this.load.spritesheet('skeleton', skeleton, { frameWidth: 128, frameHeight: 128 });
@@ -174,92 +158,56 @@ class Dota extends Phaser.Scene
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
     }
 
-    create ()
-    {
+    create() {
         scene = this;
 
-        this.cameras.main.setZoom(zoom);
+
 
         this.buildMap();
         this.placeHouses();
 
-        skeletons.push(this.add.existing(new Skeleton(this, 240, 290, 'walk', 'southEast', 100)));
-        skeletons.push(this.add.existing(new Skeleton(this, 100, 380, 'walk', 'southEast', 230)));
-        skeletons.push(this.add.existing(new Skeleton(this, 620, 140, 'walk', 'south', 380)));
-        skeletons.push(this.add.existing(new Skeleton(this, 460, 180, 'idle', 'south', 0)));
-
-        skeletons.push(this.add.existing(new Skeleton(this, 760, 100, 'attack', 'southEast', 0)));
-        skeletons.push(this.add.existing(new Skeleton(this, 800, 140, 'attack', 'northWest', 0)));
-
-        skeletons.push(this.add.existing(new Skeleton(this, 750, 480, 'walk', 'east', 200)));
-
-        skeletons.push(this.add.existing(new Skeleton(this, 1030, 300, 'die', 'west', 0)));
-
-        skeletons.push(this.add.existing(new Skeleton(this, 1180, 340, 'attack', 'northEast', 0)));
-
-        skeletons.push(this.add.existing(new Skeleton(this, 1180, 180, 'walk', 'southEast', 160)));
-
-        skeletons.push(this.add.existing(new Skeleton(this, 1450, 320, 'walk', 'southWest', 320)));
-        skeletons.push(this.add.existing(new Skeleton(this, 1500, 340, 'walk', 'southWest', 340)));
-        skeletons.push(this.add.existing(new Skeleton(this, 1550, 360, 'walk', 'southWest', 330)));
+        skeletons.push(this.add.existing(new Skeleton(this, 240, 290, 'walk', 'east', 100)));
 
         this.cameras.main.setSize(1600, 800);
 
-        this.cameras.main.scrollX = 800;
+        this.cameras.main.scrollX = 0;
 
 
 
-         upArrow = this.input.keyboard.addKey('UP');  // Get key object
-         downArrow = this.input.keyboard.addKey('DOWN');
-         leftArrow = this.input.keyboard.addKey('LEFT');
-         rightArrow = this.input.keyboard.addKey('RIGHT');
+        upArrow = this.input.keyboard.addKey('UP');  // Get key object
+        downArrow = this.input.keyboard.addKey('DOWN');
+        leftArrow = this.input.keyboard.addKey('LEFT');
+        rightArrow = this.input.keyboard.addKey('RIGHT');
 
-        navigation({
-            input:this.input
-        }).setUpNavigation()
+        navigation({input: this.input,cameras: this.cameras}).setUpNavigation()
 
-         this.input.on('wheel', function (pointer, gameObjects, deltaX, deltaY, deltaZ) {
-            console.log( deltaY)
-            zoom -= deltaY*0.005
-            console.log(zoom)
-            if(zoom<1){
-                zoom=1;
-            }
-            if(zoom>5){
-                zoom =5;
-            }
-            this.cameras.main.setZoom(zoom);
-        });
+
     }
 
-    update (time,delta)
-    {
+    update(time, delta) {
         skeletons.forEach(function (skeleton) {
             skeleton.update();
         });
 
-        navigation(this).performNavigation(delta)
-
-        if (leftArrow.isDown){
+        if (leftArrow.isDown) {
             this.cameras.main.scrollX -= MOVE_SPEED;
         }
-        
-        if(rightArrow.isDown){
+
+        if (rightArrow.isDown) {
             this.cameras.main.scrollX += MOVE_SPEED;
         }
-        if (upArrow.isDown){
+        if (upArrow.isDown) {
             this.cameras.main.scrollY -= MOVE_SPEED;
         }
-        if (downArrow.isDown){
+        if (downArrow.isDown) {
             this.cameras.main.scrollY += MOVE_SPEED;
         }
 
-       
+
     }
 
 
-    buildMap ()
-    {
+    buildMap() {
         //  Parse the data out of the map
         const data = scene.cache.json.get('map');
 
@@ -279,10 +227,8 @@ class Dota extends Phaser.Scene
 
         let i = 0;
 
-        for (let y = 0; y < mapheight; y++)
-        {
-            for (let x = 0; x < mapwidth; x++)
-            {
+        for (let y = 0; y < mapheight; y++) {
+            for (let x = 0; x < mapwidth; x++) {
                 const id = layer[i] - 1;
 
                 const tx = (x - y) * tileWidthHalf;
@@ -297,8 +243,7 @@ class Dota extends Phaser.Scene
         }
     }
 
-    placeHouses ()
-    {
+    placeHouses() {
         const house_1 = scene.add.image(240, 370, 'house');
         house_1.depth = house_1.y + 86;
 
