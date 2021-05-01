@@ -3,6 +3,9 @@ import grasswaterpng from "../../assets/iso/isometric-grass-and-water.png"
 import skeleton from "../../assets/iso/skeleton8.png"
 import house from "../../assets/iso/rem_0002.png"
 
+import navigation from "../utils/navigation"
+
+const MOVE_SPEED = 20
 
 var directions = {
     west: { offset: 0, x: -2, y: 0, opposite: 'east' },
@@ -147,11 +150,15 @@ class Skeleton extends Phaser.GameObjects.Image {
     }
 }
 
-class Example extends Phaser.Scene
+var upArrow,downArrow,leftArrow,rightArrow
+
+var zoom =1;
+var zoomStep = 0.1;
+class Dota extends Phaser.Scene
 {
     constructor ()
     {
-        super();
+        super('Dota');
     }
 
     preload ()
@@ -160,11 +167,18 @@ class Example extends Phaser.Scene
         this.load.spritesheet('tiles', grasswaterpng, { frameWidth: 64, frameHeight: 64 });
         this.load.spritesheet('skeleton', skeleton, { frameWidth: 128, frameHeight: 128 });
         this.load.image('house', house);
+
+        this.load.image('mouseFollower', house);
+
+        // removes the annoying click popup
+        this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
     }
 
     create ()
     {
         scene = this;
+
+        this.cameras.main.setZoom(zoom);
 
         this.buildMap();
         this.placeHouses();
@@ -189,37 +203,58 @@ class Example extends Phaser.Scene
         skeletons.push(this.add.existing(new Skeleton(this, 1500, 340, 'walk', 'southWest', 340)));
         skeletons.push(this.add.existing(new Skeleton(this, 1550, 360, 'walk', 'southWest', 330)));
 
-        this.cameras.main.setSize(1600, 600);
+        this.cameras.main.setSize(1600, 800);
 
-         this.cameras.main.scrollX = 800;
+        this.cameras.main.scrollX = 800;
+
+
+
+         upArrow = this.input.keyboard.addKey('UP');  // Get key object
+         downArrow = this.input.keyboard.addKey('DOWN');
+         leftArrow = this.input.keyboard.addKey('LEFT');
+         rightArrow = this.input.keyboard.addKey('RIGHT');
+
+        navigation({
+            input:this.input
+        }).setUpNavigation()
+
+         this.input.on('wheel', function (pointer, gameObjects, deltaX, deltaY, deltaZ) {
+            console.log( deltaY)
+            zoom -= deltaY*0.005
+            console.log(zoom)
+            if(zoom<1){
+                zoom=1;
+            }
+            if(zoom>5){
+                zoom =5;
+            }
+            this.cameras.main.setZoom(zoom);
+        });
     }
 
-    update ()
+    update (time,delta)
     {
         skeletons.forEach(function (skeleton) {
             skeleton.update();
         });
 
-        // return;
+        navigation(this).performNavigation(delta)
 
-        if (d)
-        {
-            this.cameras.main.scrollX -= 0.5;
-
-            if (this.cameras.main.scrollX <= 0)
-            {
-                d = 0;
-            }
+        if (leftArrow.isDown){
+            this.cameras.main.scrollX -= MOVE_SPEED;
         }
-        else
-        {
-            this.cameras.main.scrollX += 0.5;
-
-            if (this.cameras.main.scrollX >= 800)
-            {
-                d = 1;
-            }
+        
+        if(rightArrow.isDown){
+            this.cameras.main.scrollX += MOVE_SPEED;
         }
+        if (upArrow.isDown){
+            this.cameras.main.scrollY -= MOVE_SPEED;
+        }
+        if (downArrow.isDown){
+            this.cameras.main.scrollY += MOVE_SPEED;
+        }
+
+       
     }
 
 
@@ -254,7 +289,6 @@ class Example extends Phaser.Scene
                 const ty = (x + y) * tileHeightHalf;
 
                 const tile = scene.add.image(centerX + tx, centerY + ty, 'tiles', id);
-                console.log(tile)
 
                 tile.depth = centerY + ty;
 
@@ -275,4 +309,4 @@ class Example extends Phaser.Scene
 
 
 
-export default Example
+export default Dota
