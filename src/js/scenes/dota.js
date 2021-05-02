@@ -4,8 +4,10 @@ import skeleton from "../../assets/iso/skeleton8.png"
 import house from "../../assets/iso/rem_0002.png"
 
 import navigation from "../utils/navigation"
+import keyboardMapper from "../utils/keyboardMapper"
 
 const MOVE_SPEED = 20
+const PLAYER_MOVE_SPEED =2;
 
 var directions = {
     west: { offset: 0, x: -2, y: 0, opposite: 'east' },
@@ -53,6 +55,8 @@ var tileWidthHalf;
 var tileHeightHalf;
 
 var scene;
+
+var targetLocation ={x:undefined,y:undefined};
 
 // GameObject Skeleton
 class Skeleton extends Phaser.GameObjects.Image {
@@ -119,27 +123,46 @@ class Skeleton extends Phaser.GameObjects.Image {
     }
 
     update() {
-        if (this.motion === 'walk') {
-            this.x += this.direction.x * this.speed;
 
-            if (this.direction.y !== 0) {
-                this.y += this.direction.y * this.speed;
-                this.depth = this.y + 64;
-            }
+           if(targetLocation.x && targetLocation.y){
+               if(this.x>targetLocation.x){
+                   this.x -=PLAYER_MOVE_SPEED
+               }else{
+                   this.x +=PLAYER_MOVE_SPEED
+               }
+
+               if(this.y>targetLocation.y){
+                   this.y -=PLAYER_MOVE_SPEED;
+               }else{
+                   this.y += PLAYER_MOVE_SPEED
+               }
+
+               
+           }
+
+           
+
+            // this.x += this.direction.x * this.speed;
+
+            // if (this.direction.y !== 0) {
+            //     this.y += this.direction.y * this.speed;
+            //     this.depth = this.y + 64;
+            // }
 
             //  Walked far enough?
-            if (Phaser.Math.Distance.Between(this.startX, this.startY, this.x, this.y) >= this.distance) {
-                this.direction = directions[this.direction.opposite];
-                this.f = this.anim.startFrame;
-                this.frame = this.texture.get(this.direction.offset + this.f);
-                this.startX = this.x;
-                this.startY = this.y;
-            }
-        }
+            // if (Phaser.Math.Distance.Between(this.startX, this.startY, this.x, this.y) >= this.distance) {
+            //     this.direction = directions[this.direction.opposite];
+            //     this.f = this.anim.startFrame;
+            //     this.frame = this.texture.get(this.direction.offset + this.f);
+            //     this.startX = this.x;
+            //     this.startY = this.y;
+            // }
+        
     }
 }
 
 var upArrow, downArrow, leftArrow, rightArrow
+let keyMapper 
 
 class Dota extends Phaser.Scene {
     constructor() {
@@ -151,18 +174,12 @@ class Dota extends Phaser.Scene {
         this.load.spritesheet('tiles', grasswaterpng, { frameWidth: 64, frameHeight: 64 });
         this.load.spritesheet('skeleton', skeleton, { frameWidth: 128, frameHeight: 128 });
         this.load.image('house', house);
-
-        this.load.image('mouseFollower', house);
-
         // removes the annoying click popup
         this.game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
     }
 
     create() {
         scene = this;
-
-
-
         this.buildMap();
         this.placeHouses();
 
@@ -170,16 +187,15 @@ class Dota extends Phaser.Scene {
 
         this.cameras.main.setSize(1600, 800);
 
-        this.cameras.main.scrollX = 0;
-
-
-
-        upArrow = this.input.keyboard.addKey('UP');  // Get key object
-        downArrow = this.input.keyboard.addKey('DOWN');
-        leftArrow = this.input.keyboard.addKey('LEFT');
-        rightArrow = this.input.keyboard.addKey('RIGHT');
-
+        
+        keyMapper = new keyboardMapper({input:this.input,cameras:this.cameras}).initMapper()
         navigation({input: this.input,cameras: this.cameras}).setUpNavigation()
+
+        this.input.on('pointerdown', function (pointer) {
+            if(pointer.rightButtonDown()){
+                targetLocation = {x:pointer.worldX,y:pointer.worldY};
+            }
+        }, this);
 
 
     }
@@ -188,22 +204,7 @@ class Dota extends Phaser.Scene {
         skeletons.forEach(function (skeleton) {
             skeleton.update();
         });
-
-        if (leftArrow.isDown) {
-            this.cameras.main.scrollX -= MOVE_SPEED;
-        }
-
-        if (rightArrow.isDown) {
-            this.cameras.main.scrollX += MOVE_SPEED;
-        }
-        if (upArrow.isDown) {
-            this.cameras.main.scrollY -= MOVE_SPEED;
-        }
-        if (downArrow.isDown) {
-            this.cameras.main.scrollY += MOVE_SPEED;
-        }
-
-
+        keyMapper.handleKeyActions();
     }
 
 
